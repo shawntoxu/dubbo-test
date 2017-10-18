@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration>
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1}:%L - %m%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="test" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>${LOGS_DIR:-/app/logs}/ec-network.log</File>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1}:%L - %m%n</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <maxIndex>20</maxIndex>
+            <FileNamePattern>${LOGS_DIR:-/app/logs}/bak/ec-network/ec-network-%d{yyyy-MM-dd}.%i.log</FileNamePattern>
+        </rollingPolicy>
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <MaxFileSize>100MB</MaxFileSize>
+        </triggeringPolicy>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+    </appender>
+
+    <appender name="flume" class="ch.qos.logback.classic.sift.SiftingAppender">
+        <discriminator>
+            <Key>discriminator</Key>
+            <DefaultValue>flume-all</DefaultValue>
+        </discriminator>
+        <sift>
+            <appender name="FILE-${discriminator}" class="ch.qos.logback.core.rolling.RollingFileAppender">
+                <File>${LOGS_DIR:-/app/logs}/flume/${discriminator}.log</File>
+                <rollingPolicy
+                        class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                    <!-- rollover daily -->
+                    <fileNamePattern>${LOGS_DIR:-/app/logs}/bak/flume/${discriminator}-%d{yyyy-MM-dd}.%i.log
+                    </fileNamePattern>
+                    <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                        <!-- or whenever the file size reaches 100MB -->
+                        <maxFileSize>100MB</maxFileSize>
+                    </timeBasedFileNamingAndTriggeringPolicy>
+                    <maxHistory>60</maxHistory>
+                </rollingPolicy>
+                <encoder>
+                    <pattern>
+                        %m%n
+                    </pattern>
+                </encoder>
+            </appender>
+        </sift>
+    </appender>
+
+    <logger name="org.springframework" level="INFO"/>
+    <!--<logger name="com.ndpmedia.fb.pmd.rdb.client" level="DEBUG"/>-->
+    <logger name="org.springframework.data" level="INFO"/>
+    <logger name="com.alibaba.dubbo" level="WARN"/>
+    <logger name="auto.common" level="DEBUG"/>
+    <logger name="sun.net" level="WARN"/>
+    <root level="INFO">
+        <appender-ref ref="console"/>
+        <appender-ref ref="flume"/>
+        <appender-ref ref="test"/>
+    </root>
+</configuration>
